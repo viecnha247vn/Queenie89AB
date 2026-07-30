@@ -340,17 +340,35 @@ async function initSign(token){
   requestAnimationFrame(setupCanvas);
   wireSign();
 }
+function sizeCanvas(){
+  if(!sigCanvas) return;
+  const rect=sigCanvas.getBoundingClientRect();
+  if(rect.width<10){ setTimeout(sizeCanvas,150); return; }   // vänta tills canvas syns
+  const dpr=window.devicePixelRatio||1;
+  sigCanvas.width=Math.round(rect.width*dpr);
+  sigCanvas.height=Math.round(180*dpr);
+  sigCtx.setTransform(1,0,0,1,0,0);
+  sigCtx.scale(dpr,dpr);
+  sigCtx.lineWidth=2.6;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';
+}
 function setupCanvas(){
-  sigCanvas=el('sig-canvas');const rect=sigCanvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;
-  sigCanvas.width=rect.width*dpr;sigCanvas.height=180*dpr;sigCtx=sigCanvas.getContext('2d');sigCtx.scale(dpr,dpr);
-  sigCtx.lineWidth=2.4;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';hasStroke=false;
-  const pt=e=>{const rr=sigCanvas.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-rr.left,y:t.clientY-rr.top};};
-  sigCanvas.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;last=pt(e);});
-  sigCanvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=pt(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();last=p;hasStroke=true;refresh();});
-  window.addEventListener('pointerup',()=>drawing=false);
+  sigCanvas=el('sig-canvas');
+  sigCtx=sigCanvas.getContext('2d');
+  sigCanvas.style.touchAction='none';
+  hasStroke=false;
+  sizeCanvas();
+  const pos=e=>{const r=sigCanvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
+  const start=e=>{e.preventDefault();drawing=true;last=pos(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(last.x+0.01,last.y+0.01);sigCtx.stroke();hasStroke=true;refresh();try{sigCanvas.setPointerCapture(e.pointerId);}catch(_){}};
+  const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();last=p;};
+  const stop=()=>{drawing=false;};
+  sigCanvas.addEventListener('pointerdown',start);
+  sigCanvas.addEventListener('pointermove',move);
+  sigCanvas.addEventListener('pointerup',stop);
+  sigCanvas.addEventListener('pointercancel',stop);
+  window.addEventListener('resize',()=>{ if(!hasStroke) sizeCanvas(); });
 }
 function wireSign(){
-  el('btn-sig-clear').addEventListener('click',()=>{sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasStroke=false;refresh();});
+  el('btn-sig-clear').addEventListener('click',()=>{const dpr=window.devicePixelRatio||1;sigCtx.clearRect(0,0,sigCanvas.width/dpr,sigCanvas.height/dpr);hasStroke=false;refresh();});
   el('sign-typed').addEventListener('input',refresh);
   el('sign-agree').addEventListener('change',refresh);
   el('btn-send-otp').addEventListener('click',doSendOtp);
