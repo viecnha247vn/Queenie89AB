@@ -340,35 +340,37 @@ async function initSign(token){
   requestAnimationFrame(setupCanvas);
   wireSign();
 }
-function sizeCanvas(){
-  if(!sigCanvas) return;
-  const rect=sigCanvas.getBoundingClientRect();
-  if(rect.width<10){ setTimeout(sizeCanvas,150); return; }   // vänta tills canvas syns
-  const dpr=window.devicePixelRatio||1;
-  sigCanvas.width=Math.round(rect.width*dpr);
-  sigCanvas.height=Math.round(180*dpr);
-  sigCtx.setTransform(1,0,0,1,0,0);
-  sigCtx.scale(dpr,dpr);
-  sigCtx.lineWidth=2.6;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';
+function fitCanvas(){
+  const r=sigCanvas.getBoundingClientRect();
+  const w=Math.max(1,Math.round(r.width)), h=Math.max(1,Math.round(r.height||180));
+  if(sigCanvas.width!==w||sigCanvas.height!==h){ sigCanvas.width=w; sigCanvas.height=h; }
+  sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';sigCtx.fillStyle='#17212B';
 }
+function relPos(e){ const r=sigCanvas.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+function onDown(e){ e.preventDefault(); if(sigCanvas.width<2) fitCanvas(); drawing=true; last=relPos(e);
+  sigCtx.beginPath(); sigCtx.arc(last.x,last.y,1.25,0,Math.PI*2); sigCtx.fill();   // punkt så en enkel tryckning syns
+  hasStroke=true; refresh(); try{ sigCanvas.setPointerCapture(e.pointerId); }catch(_){ } }
+function onMove(e){ if(!drawing) return; e.preventDefault(); const p=relPos(e);
+  sigCtx.beginPath(); sigCtx.moveTo(last.x,last.y); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); last=p; }
+function onUp(){ drawing=false; }
 function setupCanvas(){
   sigCanvas=el('sig-canvas');
   sigCtx=sigCanvas.getContext('2d');
   sigCanvas.style.touchAction='none';
   hasStroke=false;
-  sizeCanvas();
-  const pos=e=>{const r=sigCanvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};};
-  const start=e=>{e.preventDefault();drawing=true;last=pos(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(last.x+0.01,last.y+0.01);sigCtx.stroke();hasStroke=true;refresh();try{sigCanvas.setPointerCapture(e.pointerId);}catch(_){}};
-  const move=e=>{if(!drawing)return;e.preventDefault();const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();last=p;};
-  const stop=()=>{drawing=false;};
-  sigCanvas.addEventListener('pointerdown',start);
-  sigCanvas.addEventListener('pointermove',move);
-  sigCanvas.addEventListener('pointerup',stop);
-  sigCanvas.addEventListener('pointercancel',stop);
-  window.addEventListener('resize',()=>{ if(!hasStroke) sizeCanvas(); });
+  fitCanvas();
+  // sätt lyssnare en gång (namngivna → dubblas inte)
+  sigCanvas.onpointerdown=onDown;
+  sigCanvas.onpointermove=onMove;
+  sigCanvas.onpointerup=onUp;
+  sigCanvas.onpointercancel=onUp;
+  sigCanvas.onpointerleave=onUp;
+  // mus-fallback endast om pointer events saknas (undviker dubbel-ritning i Chrome)
+  if(!('PointerEvent' in window)){ sigCanvas.onmousedown=onDown; sigCanvas.onmousemove=onMove; window.onmouseup=onUp; }
+  window.addEventListener('resize',()=>{ if(!hasStroke) fitCanvas(); });
 }
 function wireSign(){
-  el('btn-sig-clear').addEventListener('click',()=>{const dpr=window.devicePixelRatio||1;sigCtx.clearRect(0,0,sigCanvas.width/dpr,sigCanvas.height/dpr);hasStroke=false;refresh();});
+  el('btn-sig-clear').addEventListener('click',()=>{sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasStroke=false;refresh();});
   el('sign-typed').addEventListener('input',refresh);
   el('sign-agree').addEventListener('change',refresh);
   el('btn-send-otp').addEventListener('click',doSendOtp);
