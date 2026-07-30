@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Signera · Elektronisk avtalssignering</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  :root{
+    --ink:#17212B; --ink-soft:#455360; --paper:#DCEAE1; --card:#FFFFFF;
+    --line:#DCE1DA; --line-soft:#E8ECE5;
+    --seal:#1F5E54; --seal-deep:#164A42; --seal-tint:#E7F0ED;
+    --gold:#A8823C; --gold-tint:#F5EEDF; --brick:#9E4630; --brick-tint:#F5E7E1;
+    --serif:'Fraunces',Georgia,serif; --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --r:10px; --shadow:0 1px 2px rgba(23,33,43,.04),0 8px 30px -12px rgba(23,33,43,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased;font-size:15px}
+  h1,h2,h3{font-family:var(--serif);font-weight:500;line-height:1.15;letter-spacing:-.01em}
+  .mono{font-family:var(--mono)}
+  button{font-family:var(--sans);cursor:pointer;border:none;background:none}
+  input,textarea{font-family:var(--sans);font-size:15px;color:var(--ink)}
+  :focus-visible{outline:2px solid var(--seal);outline-offset:2px;border-radius:4px}
+  .app-header{position:sticky;top:0;z-index:20;background:var(--seal-deep);border-bottom:1px solid rgba(255,255,255,.08)}
+  .app-header .wrap{max-width:1080px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:14px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.02em;color:#fff}
+  .brand .knot{width:26px;height:26px;flex:none}
+  .brand small{font-family:var(--sans);font-weight:500;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#B9DBD0;margin-left:2px}
+  .nav-spacer{flex:1}
+  main{max-width:1080px;margin:0 auto;padding:34px 22px 90px}
+  .screen{display:none;animation:rise .4s ease both}
+  .screen.active{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  .eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--seal);font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--seal)}
+  .lede{color:var(--ink-soft);max-width:56ch;margin-top:8px}
+  .h-xl{font-size:clamp(28px,5vw,42px)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:26px;align-items:start;margin-top:30px}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .field .hint{font-weight:400;color:var(--ink-soft);font-size:12px}
+  input[type=text],input[type=email],textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;transition:border-color .15s,box-shadow .15s}
+  input:focus,textarea:focus{outline:none;border-color:var(--seal);box-shadow:0 0 0 3px var(--seal-tint)}
+  textarea{resize:vertical;min-height:150px;line-height:1.6;font-size:13.5px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:520px){.row2{grid-template-columns:1fr}}
+  .party-box{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px;background:linear-gradient(#fff,#fcfdfb)}
+  .party-box h4{font-family:var(--sans);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--seal);margin-bottom:12px;font-weight:600}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border-radius:8px;font-weight:600;font-size:14.5px;transition:transform .08s,background .15s;border:1px solid transparent}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--seal);color:#fff;box-shadow:0 6px 16px -8px var(--seal)}
+  .btn-primary:hover{background:var(--seal-deep)}
+  .btn-primary:disabled{background:#B7C4BF;box-shadow:none;cursor:not-allowed}
+  .btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+  .btn-block{width:100%}
+  .btn-sm{padding:8px 14px;font-size:13px}
+  .rail .card{padding:20px}
+  .rail h3{font-size:15px;font-family:var(--sans);font-weight:600;margin-bottom:4px}
+  .rail .sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px}
+  .seal-card{display:flex;gap:16px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--seal-tint)}
+  .seal-glyph{width:64px;height:64px;flex:none;border-radius:8px;background:#fff;border:1px solid #cfe0da;padding:6px}
+  .seal-glyph svg{width:100%;height:100%;display:block}
+  .seal-card .info{min-width:0}
+  .seal-card .info .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--seal-deep);font-weight:600}
+  .seal-card .info .hash{font-family:var(--mono);font-size:12px;color:var(--ink);word-break:break-all;margin-top:3px;line-height:1.45}
+  .sheet{background:#fff;border:1px solid var(--line);border-radius:12px;padding:30px 34px;box-shadow:var(--shadow)}
+  @media (max-width:520px){.sheet{padding:22px 18px}}
+  .sheet .doc-title{font-size:23px;margin-bottom:4px}
+  .sheet .doc-body{white-space:pre-wrap;line-height:1.7;color:#26313b;margin-top:16px;font-size:14px}
+  .doc-parties{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .doc-parties .p{flex:1;min-width:150px;border:1px solid var(--line-soft);border-radius:8px;padding:10px 12px;font-size:12.5px}
+  .doc-parties .p b{display:block;font-size:13.5px}
+  .doc-parties .p span{color:var(--ink-soft)}
+  .divider{height:1px;background:var(--line);margin:24px 0}
+  .sig-wrap{border:1.5px dashed #c3ccc6;border-radius:10px;background:linear-gradient(#fff,#fafcfb);position:relative}
+  .sig-wrap canvas{width:100%;height:180px;display:block;touch-action:none;border-radius:10px;cursor:crosshair}
+  .sig-baseline{position:absolute;left:22px;right:22px;bottom:44px;border-bottom:1px solid #d7ded9;pointer-events:none}
+  .sig-baseline span{position:absolute;left:0;bottom:6px;font-size:11px;color:#9aa8a1}
+  .sig-clear{position:absolute;top:10px;right:10px}
+  .otp-note{background:var(--gold-tint);border:1px solid #e6d6ac;border-radius:8px;padding:12px 14px;font-size:13px;margin-top:12px;display:flex;gap:10px;align-items:flex-start}
+  .otp-inputs{display:flex;gap:8px;margin-top:12px}
+  .otp-inputs input{width:44px;height:52px;text-align:center;font-family:var(--mono);font-size:20px;padding:0}
+  .check{display:flex;gap:11px;align-items:flex-start;margin:18px 0;font-size:13.5px;color:var(--ink-soft);cursor:pointer}
+  .check input{width:18px;height:18px;margin-top:2px;accent-color:var(--seal);flex:none}
+  .step-label{font-family:var(--mono);font-size:12px;color:var(--seal);font-weight:500;margin-bottom:6px;display:block}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);background:var(--ink);color:#fff;padding:13px 20px;border-radius:100px;font-size:13.5px;font-weight:500;box-shadow:0 12px 34px -10px rgba(0,0,0,.5);z-index:60;transition:transform .35s cubic-bezier(.2,.9,.3,1.3);max-width:90vw}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  .notice{background:var(--brick-tint);border:1px solid #e4bcac;color:var(--brick);padding:14px 16px;border-radius:10px;font-size:13.5px;margin-bottom:22px}
+  .links-box{background:var(--seal-tint);border:1px solid #bcd6cf;border-radius:10px;padding:16px;margin-top:18px}
+  .links-box .lrow{display:flex;flex-direction:column;gap:2px;padding:9px 0;border-top:1px solid #cde0da}
+  .links-box .lrow:first-of-type{border-top:none}
+  .links-box a{font-family:var(--mono);font-size:12px;word-break:break-all}
+  .center-wrap{max-width:520px;margin:40px auto;text-align:center}
+  .big-check{width:74px;height:74px;border-radius:50%;background:var(--seal-tint);color:var(--seal);display:grid;place-items:center;margin:0 auto 20px;font-size:34px}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="knot" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="15" stroke="#FFFFFF" stroke-width="1.5"/>
+        <path d="M10 16.5c0-3.3 2.7-6 6-6s6 2.7 6 6-2.7 6-6 6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 22.5c-2 0-3.6-1.2-3.6-3.2" stroke="#E8C98A" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="2.2" fill="#FFFFFF"/>
+      </svg>
+      Signera<small>Queenie89</small>
+    </div>
+    <div class="nav-spacer"></div>
+  </div>
+</header>
+
+<main>
+  <div id="config-notice"></div>
+
+  <!-- ADMIN: skapa & skicka -->
+  <section class="screen" id="screen-admin">
+    <div class="eyebrow">Nytt avtal</div>
+    <h1 class="h-xl">Skapa avtalet.<br>Skicka för signering.</h1>
+    <p class="lede">Avtalet nedan är förifyllt. Fyll i motpartens namn och e-post, skicka – båda parter får varsin personlig länk och signerar var för sig med engångskod.</p>
+    <div class="grid">
+      <div class="card" style="padding:26px">
+        <div class="field"><label for="f-title">Avtalstitel</label><input type="text" id="f-title"/></div>
+        <div class="field"><label for="f-body">Avtalstext</label><textarea id="f-body" style="min-height:240px"></textarea></div>
+        <div class="party-box">
+          <h4>Part A · avsändare</h4>
+          <div class="field"><label>Namn</label><input type="text" id="a-name"/></div>
+          <div class="row2">
+            <div class="field"><label>E-post</label><input type="email" id="a-email" placeholder="quynh@..."/></div>
+            <div class="field"><label>Roll / företag</label><input type="text" id="a-role"/></div>
+          </div>
+        </div>
+        <div class="party-box">
+          <h4>Part B · motpart</h4>
+          <div class="field"><label>Namn</label><input type="text" id="b-name" placeholder="Motpartens namn"/></div>
+          <div class="row2">
+            <div class="field"><label>E-post <span class="hint">— hit skickas länken</span></label><input type="email" id="b-email"/></div>
+            <div class="field"><label>Roll <span class="hint">(valfritt)</span></label><input type="text" id="b-role" placeholder="Köpare"/></div>
+          </div>
+          <p style="font-size:12px;color:var(--ink-soft);margin-top:4px">Org.nr och adress fyller motparten i själv vid signering.</p>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-create">Skapa avtal och skicka länkar</button>
+        <div id="create-result"></div>
+      </div>
+      <aside class="rail">
+        <div class="card">
+          <h3>Så går det till</h3>
+          <p class="sub">Spårbart hela vägen.</p>
+          <div style="font-size:13px;line-height:2;color:var(--ink-soft)">
+            <b style="color:var(--seal)">01</b> Innehållet låses med SHA-256.<br>
+            <b style="color:var(--seal)">02</b> Båda parter får varsin länk via e-post.<br>
+            <b style="color:var(--seal)">03</b> Var och en signerar + bekräftar med kod.<br>
+            <b style="color:var(--seal)">04</b> Förseglad PDF skickas automatiskt till båda.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- SIGN -->
+  <section class="screen" id="screen-sign">
+    <div class="grid">
+      <div>
+        <div class="eyebrow" id="sign-eyebrow">Signering</div>
+        <div class="sheet">
+          <span class="step-label">Steg 1 · Granska</span>
+          <h2 class="doc-title" id="sign-doc-title"></h2>
+          <div class="doc-parties" id="sign-doc-parties"></div>
+          <div class="doc-body" id="sign-doc-body"></div>
+        </div>
+        <div class="seal-card" style="margin-top:16px">
+          <div class="seal-glyph" id="sign-glyph"></div>
+          <div class="info"><div class="k">Du signerar exakt detta innehåll</div><div class="hash" id="sign-hash"></div></div>
+        </div>
+        <div class="sheet" style="margin-top:22px" id="sign-form">
+          <div id="b-extra" style="display:none">
+            <span class="step-label">Dina uppgifter</span>
+            <div class="row2">
+              <div class="field"><label>Org.nr / personnr</label><input type="text" id="s-orgnr"/></div>
+              <div class="field"><label>Adress</label><input type="text" id="s-address"/></div>
+            </div>
+            <div class="divider"></div>
+          </div>
+          <span class="step-label">Steg 2 · Rita din signatur</span>
+          <div class="sig-wrap" style="margin-top:10px">
+            <canvas id="sig-canvas"></canvas>
+            <div class="sig-baseline"><span>Signatur</span></div>
+            <button class="btn btn-ghost btn-sm sig-clear" id="btn-sig-clear">Rensa</button>
+          </div>
+          <div class="field" style="margin-top:18px"><label for="sign-typed">Bekräfta ditt fullständiga namn</label><input type="text" id="sign-typed"/></div>
+          <label class="check"><input type="checkbox" id="sign-agree"/><span>Jag har läst avtalet och godkänner dess villkor. Min elektroniska signatur är juridiskt bindande enligt eIDAS (910/2014).</span></label>
+          <span class="step-label">Steg 3 · Bekräfta identitet</span>
+          <button class="btn btn-primary btn-block" id="btn-send-otp" disabled>Skicka engångskod till min e-post</button>
+          <div id="otp-panel" style="display:none">
+            <div class="otp-note"><span>📧</span><div>Vi har skickat en 6-siffrig kod till din e-post. Ange den nedan.</div></div>
+            <div class="otp-inputs" id="otp-inputs">
+              <input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/>
+              <input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/>
+            </div>
+            <button class="btn btn-primary btn-block" id="btn-confirm-sign" style="margin-top:16px">Signera avtalet</button>
+          </div>
+        </div>
+        <div id="already" style="display:none"></div>
+      </div>
+      <aside class="rail">
+        <div class="card">
+          <h3>Bevis som registreras</h3>
+          <p class="sub">Vid signering loggas följande.</p>
+          <div style="font-size:12.5px;line-height:2;color:var(--ink-soft)">
+            🕓 Tidsstämpel (server)<br>💻 Enhet / webbläsare<br>🔒 Dokumentets sigill<br>✍️ Signaturbild + namn<br>📧 Verifierad e-post
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- THANKS -->
+  <section class="screen" id="screen-thanks">
+    <div class="center-wrap">
+      <div class="big-check">✓</div>
+      <h1 style="font-size:28px">Tack – din signatur är registrerad</h1>
+      <p class="lede" style="margin:14px auto 0" id="thanks-text"></p>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
+const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
+
+const DEFAULT_TITLE = 'Avtal om anvisning och överlåtelse av affärslokal – Vittsjö';
+const DEFAULT_BODY =
+`§ 1 BAKGRUND
+Part A har anvisat Part B rätten att överta en affärslokal om cirka 139 m² i Vittsjö, avsedd för Part B:s näringsverksamhet.
+
+§ 2 LOKALEN
+Affärslokal ca 139 m² i Vittsjö. Månadshyra till hyresvärd: 3 000 kr, betalas av Part B enligt separat hyresavtal. Överlåtelse av hyresrätten förutsätter hyresvärdens skriftliga godkännande; erhålls inte detta är avtalet utan verkan och erlagd avgift återbetalas.
+
+§ 3 ANVISNINGSAVGIFT
+För anvisning och överlåtelse av rätten till lokalen betalar Part B 100 000 kr till Part A (Queenie89 AB).
+
+§ 4 RENOVERING
+Part B ersätter renoverings-/reparationskostnad genom avbetalning med 11 000 kr per månad.
+
+§ 5 BETALNING OCH DRÖJSMÅL
+Vid utebliven betalning utgår dröjsmålsränta 24 % per år. Obetald fordran kan överlämnas till inkasso och betalningsföreläggande hos Kronofogdemyndigheten.
+
+§ 6 SKYDD MOT KRINGGÅENDE
+Part B förbinder sig att inte direkt eller indirekt hyra, överta eller nyttja den anvisade lokalen utan att avgiften enligt § 3 betalas. Vid brott förfaller hela avgiften (100 000 kr) omedelbart jämte dröjsmålsränta.
+
+§ 7 SEKRETESS
+Uppgifter om lokalens läge och avtalets villkor har lämnats i förtroende och får inte röjas för utomstående.
+
+§ 8 TILLTRÄDE
+Tillträde till lokalen sker efter överenskommelse mellan parterna, under förutsättning att hyresvärdens godkännande enligt § 2 föreligger och att betalning enligt § 3 fullgjorts eller påbörjats enligt överenskommen plan.
+
+§ 9 AVTALSTID
+Avtalet gäller från undertecknandet till dess att samtliga betalningsförpliktelser enligt §§ 3–4 fullgjorts.
+
+§ 10 TILLÄMPLIG LAG OCH TVIST
+Svensk lag tillämpas. Tvist ska i första hand lösas genom förhandling och i annat fall avgöras av allmän domstol.`;
+
+const el=id=>document.getElementById(id);
+const $=s=>document.querySelector(s);
+function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2800);}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function screen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));el('screen-'+n).classList.add('active');window.scrollTo(0,0);}
+function sealGlyph(hash){let r='';const cell=10,size=5,pad=1;for(let y=0;y<size;y++)for(let x=0;x<3;x++){if(parseInt((hash[(y*3+x)*2]||'0'),16)%2===0){[x,size-1-x].forEach(px=>r+=`<rect x="${pad+px*cell}" y="${pad+y*cell}" width="${cell}" height="${cell}" rx="1.5" fill="#1F5E54"/>`);}}const t=size*cell+pad*2;return `<svg viewBox="0 0 ${t} ${t}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;}
+
+async function api(action,payload){
+  const res=await fetch(CONFIG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},payload))});
+  return res.json();
+}
+
+/* ---- BOOT ---- */
+(function(){
+  const token=new URLSearchParams(location.search).get('token');
+  if(!CONFIG.API){
+    el('config-notice').innerHTML='<div class="notice"><b>Inställning krävs:</b> klistra in din Apps Script-URL i <span class="mono">CONFIG.API</span> högst upp i script-taggen, och lägg samma <span class="mono">APP_URL</span> i Code.gs.</div>';
+    if(!token){ initAdmin(); }
+    return;
+  }
+  if(token){ initSign(token); } else { initAdmin(); }
+})();
+
+/* ================= ADMIN ================= */
+function initAdmin(){
+  el('f-title').value=DEFAULT_TITLE;
+  el('f-body').value=DEFAULT_BODY;
+  el('a-name').value='Nguyen Thi To Quynh';
+  el('a-role').value='Queenie89 AB, Nya gatan 12, 131 57 Nacka';
+  screen('admin');
+  el('btn-create').addEventListener('click',createContract);
+}
+async function createContract(){
+  const p={title:el('f-title').value.trim(),body:el('f-body').value.trim(),
+    A:{name:el('a-name').value.trim(),email:el('a-email').value.trim(),role:el('a-role').value.trim()},
+    B:{name:el('b-name').value.trim(),email:el('b-email').value.trim(),role:el('b-role').value.trim()}};
+  if(!p.title||!p.body){toast('Fyll i titel och text');return;}
+  if(!p.A.name||!p.A.email||!p.B.name||!p.B.email){toast('Fyll i namn och e-post för båda parter');return;}
+  if(!CONFIG.API){toast('CONFIG.API saknas');return;}
+  const btn=el('btn-create');btn.disabled=true;btn.textContent='Skickar…';
+  try{
+    const r=await api('create',p);
+    if(!r.ok){toast('Fel: '+(r.error||'okänt'));btn.disabled=false;btn.textContent='Skapa avtal och skicka länkar';return;}
+    el('create-result').innerHTML=`<div class="links-box">
+      <b style="color:var(--seal-deep)">✓ Skickat · avtal ${esc(r.contractId)}</b>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:6px 0 8px">Länkar har mejlats till båda parter. Du kan även dela dem manuellt:</p>
+      <div class="lrow"><span style="font-size:12px;color:var(--ink-soft)">Part A – ${esc(p.A.name)}</span><a href="${r.linkA}">${r.linkA}</a></div>
+      <div class="lrow"><span style="font-size:12px;color:var(--ink-soft)">Part B – ${esc(p.B.name)}</span><a href="${r.linkB}">${r.linkB}</a></div>
+      <p style="font-size:12px;color:var(--ink-soft);margin-top:10px">En förseglad PDF mejlas automatiskt till båda när avtalet är signerat av er båda.</p></div>`;
+    btn.textContent='Skickat ✓';
+  }catch(e){toast('Nätverksfel – kontrollera API-URL');btn.disabled=false;btn.textContent='Skapa avtal och skicka länkar';}
+}
+
+/* ================= SIGN ================= */
+let SIDE=null,TOKEN=null,sigCanvas,sigCtx,drawing=false,hasStroke=false,last=null;
+async function initSign(token){
+  TOKEN=token;
+  let r; try{ r=await api('get',{token}); }catch(e){ el('config-notice').innerHTML='<div class="notice">Kunde inte nå servern.</div>'; return; }
+  if(!r.ok){ screen('sign'); el('sign-form').style.display='none'; el('already').style.display='block'; el('already').innerHTML='<div class="notice">'+esc(r.error||'Ogiltig länk')+'</div>'; return; }
+  SIDE=r.side;
+  el('sign-eyebrow').textContent=`Signering · Part ${r.side} — ${r.me.name}`;
+  el('sign-doc-title').textContent=r.title;
+  el('sign-doc-body').textContent=r.body;
+  el('sign-doc-parties').innerHTML=
+    `<div class="p"><b>${esc(r.partyA.name)}</b><span>Part A · ${esc(r.partyA.role||'—')} ${r.partyA.signed?'· signerat ✓':''}</span></div>
+     <div class="p"><b>${esc(r.partyB.name)}</b><span>Part B · ${esc(r.partyB.role||'—')} ${r.partyB.signed?'· signerat ✓':''}</span></div>`;
+  el('sign-glyph').innerHTML=sealGlyph(r.docHash);
+  el('sign-hash').textContent=r.docHash;
+  screen('sign');
+  if(r.me.signed){ el('sign-form').style.display='none'; el('already').style.display='block'; el('already').innerHTML='<div class="links-box"><b style="color:var(--seal-deep)">Du har redan signerat detta avtal.</b></div>'; return; }
+  if(r.side==='B') el('b-extra').style.display='block';
+  requestAnimationFrame(setupCanvas);
+  wireSign();
+}
+function setupCanvas(){
+  sigCanvas=el('sig-canvas');const rect=sigCanvas.getBoundingClientRect();const dpr=window.devicePixelRatio||1;
+  sigCanvas.width=rect.width*dpr;sigCanvas.height=180*dpr;sigCtx=sigCanvas.getContext('2d');sigCtx.scale(dpr,dpr);
+  sigCtx.lineWidth=2.4;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';hasStroke=false;
+  const pt=e=>{const rr=sigCanvas.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-rr.left,y:t.clientY-rr.top};};
+  sigCanvas.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;last=pt(e);});
+  sigCanvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=pt(e);sigCtx.beginPath();sigCtx.moveTo(last.x,last.y);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();last=p;hasStroke=true;refresh();});
+  window.addEventListener('pointerup',()=>drawing=false);
+}
+function wireSign(){
+  el('btn-sig-clear').addEventListener('click',()=>{sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);hasStroke=false;refresh();});
+  el('sign-typed').addEventListener('input',refresh);
+  el('sign-agree').addEventListener('change',refresh);
+  el('btn-send-otp').addEventListener('click',doSendOtp);
+  const boxes=document.querySelectorAll('#otp-inputs input');
+  boxes.forEach((b,i)=>{b.addEventListener('input',()=>{b.value=b.value.replace(/\D/g,'');if(b.value&&i<5)boxes[i+1].focus();});b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i>0)boxes[i-1].focus();});});
+  el('btn-confirm-sign').addEventListener('click',doSign);
+}
+function refresh(){el('btn-send-otp').disabled=!(hasStroke&&el('sign-typed').value.trim().length>1&&el('sign-agree').checked);}
+async function doSendOtp(){
+  const btn=el('btn-send-otp');btn.disabled=true;btn.textContent='Skickar…';
+  const r=await api('sendOtp',{token:TOKEN});
+  if(!r.ok){toast('Fel: '+(r.error||''));btn.disabled=false;btn.textContent='Skicka engångskod till min e-post';return;}
+  el('otp-panel').style.display='block';btn.style.display='none';document.querySelector('#otp-inputs input').focus();
+}
+async function doSign(){
+  const otp=[...document.querySelectorAll('#otp-inputs input')].map(b=>b.value).join('');
+  if(otp.length!==6){toast('Ange 6 siffror');return;}
+  const btn=el('btn-confirm-sign');btn.disabled=true;btn.textContent='Signerar…';
+  const payload={token:TOKEN,otp,signature:sigCanvas.toDataURL('image/png'),typedName:el('sign-typed').value.trim(),userAgent:navigator.userAgent};
+  if(SIDE==='B'){payload.orgnr=el('s-orgnr').value.trim();payload.address=el('s-address').value.trim();}
+  const r=await api('sign',payload);
+  if(!r.ok){toast('Fel: '+(r.error||''));btn.disabled=false;btn.textContent='Signera avtalet';return;}
+  el('thanks-text').textContent=r.done?'Avtalet är nu signerat av båda parter. En förseglad PDF har mejlats till er.':'Vi väntar nu på motpartens signatur. När båda skrivit under mejlas en förseglad PDF till er båda.';
+  screen('thanks');
+}
+</script>
+</body>
+</html>
