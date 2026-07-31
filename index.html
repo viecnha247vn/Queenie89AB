@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v10</span>
+    <span class="verbadge">v11</span>
   </div>
 </header>
 
@@ -132,7 +132,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
   <section class="screen" id="screen-admin">
     <div class="eyebrow">Nytt avtal</div>
     <h1 class="h-xl">Skapa avtalet.<br>Skicka för signering.</h1>
-    <p class="lede">Avtalet nedan är förifyllt. Fyll i motpartens namn och e-post, skicka – båda parter får varsin personlig länk och signerar var för sig med engångskod.</p>
+    <p class="lede">Avtalet nedan är förifyllt. Fyll i motpartens namn och e-post, skicka – båda parter får varsin personlig länk och signerar var för sig.</p>
     <div class="grid">
       <div class="card" style="padding:26px">
         <div class="field"><label for="f-title">Avtalstitel</label><input type="text" id="f-title"/></div>
@@ -164,7 +164,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
           <div style="font-size:13px;line-height:2;color:var(--ink-soft)">
             <b style="color:var(--seal)">01</b> Innehållet låses med SHA-256.<br>
             <b style="color:var(--seal)">02</b> Båda parter får varsin länk via e-post.<br>
-            <b style="color:var(--seal)">03</b> Var och en signerar + bekräftar med kod.<br>
+            <b style="color:var(--seal)">03</b> Var och en ritar sin signatur och godkänner.<br>
             <b style="color:var(--seal)">04</b> Förseglad PDF skickas automatiskt till båda.
           </div>
         </div>
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v10</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v11</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -204,16 +204,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
           </div>
           <div class="field" style="margin-top:16px"><label for="sign-name">Namnförtydligande — skriv ditt namn</label><input type="text" id="sign-name" autocomplete="name" placeholder="För- och efternamn"/></div>
           <label class="check"><input type="checkbox" id="sign-agree"/><span>Jag har läst avtalet och godkänner dess villkor. Min elektroniska signatur är juridiskt bindande enligt eIDAS (910/2014).</span></label>
-          <span class="step-label">Steg 3 · Bekräfta identitet</span>
-          <button class="btn btn-primary btn-block" id="btn-send-otp" disabled>Skicka engångskod till min e-post</button>
-          <div id="otp-panel" style="display:none">
-            <div class="otp-note"><span>📧</span><div>Vi har skickat en 6-siffrig kod till din e-post. Ange den nedan.</div></div>
-            <div class="otp-inputs" id="otp-inputs">
-              <input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/>
-              <input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/><input maxlength="1" inputmode="numeric"/>
-            </div>
-            <button class="btn btn-primary btn-block" id="btn-confirm-sign" style="margin-top:16px">Signera avtalet</button>
-          </div>
+          <button class="btn btn-primary btn-block" id="btn-confirm-sign" disabled>Signera avtalet</button>
         </div>
         <div id="already" style="display:none"></div>
       </div>
@@ -242,7 +233,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v10)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v11)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -295,7 +286,7 @@ async function api(action,payload){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v10)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v11)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -400,33 +391,21 @@ function wireSign(){
   el('btn-sig-clear').addEventListener('click',()=>{ if(sigCtx){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);} hasStroke=false; refresh(); });
   el('sign-name').addEventListener('input',refresh);
   el('sign-agree').addEventListener('change',refresh);
-  el('btn-send-otp').addEventListener('click',doSendOtp);
-  const boxes=document.querySelectorAll('#otp-inputs input');
-  boxes.forEach((b,i)=>{b.addEventListener('input',()=>{b.value=b.value.replace(/\D/g,'');if(b.value&&i<5)boxes[i+1].focus();});b.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!b.value&&i>0)boxes[i-1].focus();});});
   el('btn-confirm-sign').addEventListener('click',doSign);
 }
-function refresh(){el('btn-send-otp').disabled=!(hasStroke&&el('sign-name').value.trim().length>1&&el('sign-agree').checked);}
-async function doSendOtp(){
-  const btn=el('btn-send-otp');btn.disabled=true;btn.textContent='Skickar…';
-  const D=el('dbg');
-  let r; try{ r=await api('sendOtp',{token:TOKEN}); }
-  catch(e){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SÄND-FEL: '+((e&&e.message)||e);} btn.disabled=false;btn.textContent='Skicka engångskod till min e-post'; return; }
-  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SERVER (kod-mejl): '+((r&&r.error)||'okänt');} btn.disabled=false;btn.textContent='Skicka engångskod till min e-post'; return; }
-  if(D){D.style.display='block';D.style.color='#1F5E54';D.textContent='Kod skickad ✓ '+(r.to?('till '+r.to+' '):'')+'— kolla e-post OCH skräppost';}
-  el('otp-panel').style.display='block';btn.style.display='none';document.querySelector('#otp-inputs input').focus();
-}
+function refresh(){el('btn-confirm-sign').disabled=!(hasStroke&&el('sign-name').value.trim().length>1&&el('sign-agree').checked);}
 async function doSign(){
   const name=el('sign-name').value.trim();
   if(name.length<2){ toast('Skriv ditt namn'); return; }
   if(!hasStroke){ toast('Rita din signatur'); return; }
-  const otp=[...document.querySelectorAll('#otp-inputs input')].map(b=>b.value).join('');
-  if(otp.length!==6){toast('Ange 6 siffror');return;}
   const btn=el('btn-confirm-sign');btn.disabled=true;btn.textContent='Signerar…';
-  const payload={token:TOKEN,otp,signature:sigCanvas.toDataURL('image/png'),typedName:name,userAgent:navigator.userAgent};
+  const payload={token:TOKEN,signature:sigCanvas.toDataURL('image/png'),typedName:name,userAgent:navigator.userAgent};
   if(SIDE==='B'){payload.orgnr=el('s-orgnr').value.trim();payload.address=el('s-address').value.trim();}
-  const r=await api('sign',payload);
-  if(!r.ok){toast('Fel: '+(r.error||''));btn.disabled=false;btn.textContent='Signera avtalet';return;}
-  el('thanks-text').textContent=r.done?'Avtalet är nu signerat av båda parter. En förseglad PDF har mejlats till er.':'Vi väntar nu på motpartens signatur. När båda skrivit under mejlas en förseglad PDF till er båda.';
+  let r; try{ r=await api('sign',payload); }catch(e){ toast('Nätverksfel'); btn.disabled=false;btn.textContent='Signera avtalet'; return; }
+  if(!r||!r.ok){toast('Fel: '+((r&&r.error)||''));btn.disabled=false;btn.textContent='Signera avtalet';return;}
+  el('thanks-text').innerHTML = r.done
+    ? 'Avtalet är nu signerat av båda parter. En förseglad PDF skickas till er via e-post.'+(r.pdfUrl?'<br><br><a class="btn btn-primary" style="display:inline-flex" href="'+r.pdfUrl+'" target="_blank">Ladda ner signerat avtal (PDF)</a>':'')
+    : 'Tack! Vi väntar nu på motpartens signatur. När båda skrivit under skickas en förseglad PDF till er båda.';
   screen('thanks');
 }
 </script>
