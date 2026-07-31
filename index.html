@@ -7,7 +7,6 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
   :root{
@@ -116,7 +115,7 @@
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v3</span>
+    <span class="verbadge">v3.1</span>
   </div>
 </header>
 
@@ -191,7 +190,7 @@
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v3 · laddar…</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v3.1 · laddar…</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -346,52 +345,54 @@ async function initSign(token){
   requestAnimationFrame(setupCanvas);
   wireSign();
 }
-function fitCanvas(){
-  const r=sigCanvas.getBoundingClientRect();
-  const w=Math.max(1,Math.round(r.width)), h=Math.max(1,Math.round(r.height||180));
-  if(sigCanvas.width!==w||sigCanvas.height!==h){ sigCanvas.width=w; sigCanvas.height=h; }
-  sigCtx.lineWidth=2.5;sigCtx.lineCap='round';sigCtx.lineJoin='round';sigCtx.strokeStyle='#17212B';sigCtx.fillStyle='#17212B';
-}
-function relPos(e){ const r=sigCanvas.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
-function onDown(e){ e.preventDefault(); if(sigCanvas.width<2) fitCanvas(); drawing=true; last=relPos(e);
-  sigCtx.beginPath(); sigCtx.arc(last.x,last.y,1.25,0,Math.PI*2); sigCtx.fill();   // punkt så en enkel tryckning syns
-  hasStroke=true; refresh(); try{ sigCanvas.setPointerCapture(e.pointerId); }catch(_){ } }
-function onMove(e){ if(!drawing) return; e.preventDefault(); const p=relPos(e);
-  sigCtx.beginPath(); sigCtx.moveTo(last.x,last.y); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); last=p; }
-function onUp(){ drawing=false; }
-let signaturePad=null;
-function resizeSigCanvas(){
-  const ratio=Math.max(window.devicePixelRatio||1,1);
-  const w=sigCanvas.offsetWidth||Math.round(sigCanvas.getBoundingClientRect().width)||500;
-  const h=sigCanvas.offsetHeight||180;
-  sigCanvas.width=Math.round(w*ratio);
-  sigCanvas.height=Math.round(h*ratio);
-  const ctx=sigCanvas.getContext('2d'); ctx.setTransform(1,0,0,1,0,0); ctx.scale(ratio,ratio);
-  if(signaturePad) signaturePad.clear();
-}
 function setupCanvas(){
   sigCanvas=el('sig-canvas');
   sigCtx=sigCanvas.getContext('2d');
   sigCanvas.style.touchAction='none';
   hasStroke=false;
   const eng=el('sig-engine');
-  if(window.SignaturePad){
-    signaturePad=new SignaturePad(sigCanvas,{penColor:'#17212B',minWidth:1.2,maxWidth:2.9,backgroundColor:'rgba(0,0,0,0)'});
-    resizeSigCanvas();
-    signaturePad.addEventListener('endStroke',()=>{ hasStroke=!signaturePad.isEmpty(); refresh(); });
-    window.addEventListener('resize',()=>{ if(signaturePad.isEmpty()) resizeSigCanvas(); });
-    if(eng) eng.textContent='v3 · signature_pad ✓';
-  } else {
-    fitCanvas();
-    sigCanvas.onpointerdown=onDown; sigCanvas.onpointermove=onMove; sigCanvas.onpointerup=onUp;
-    sigCanvas.onpointercancel=onUp; sigCanvas.onpointerleave=onUp;
-    if(!('PointerEvent' in window)){ sigCanvas.onmousedown=onDown; sigCanvas.onmousemove=onMove; window.onmouseup=onUp; }
-    window.addEventListener('resize',()=>{ if(!hasStroke) fitCanvas(); });
-    if(eng) eng.textContent='v3 · inbyggd';
+  let taps=0;
+  function fit(){
+    const r=sigCanvas.getBoundingClientRect();
+    if(r.width<5){ setTimeout(fit,200); return; }
+    sigCanvas.width=Math.round(r.width);
+    sigCanvas.height=Math.round(r.height||180);
+    sigCtx.lineWidth=2.7; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+    sigCtx.strokeStyle='#17212B'; sigCtx.fillStyle='#17212B';
   }
+  fit();
+  function xy(e){ const r=sigCanvas.getBoundingClientRect(); const t=(e.touches&&e.touches[0])||e; return { x:t.clientX-r.left, y:t.clientY-r.top }; }
+  function down(e){
+    e.preventDefault();
+    if(sigCanvas.width<2) fit();
+    drawing=true; last=xy(e);
+    sigCtx.beginPath(); sigCtx.arc(last.x,last.y,1.5,0,Math.PI*2); sigCtx.fill();
+    hasStroke=true; taps++; if(eng) eng.textContent='v3.1 · beröringar: '+taps;
+    refresh();
+  }
+  function move(e){
+    if(!drawing) return; e.preventDefault();
+    const p=xy(e);
+    sigCtx.beginPath(); sigCtx.moveTo(last.x,last.y); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); last=p;
+  }
+  function up(){ drawing=false; }
+  if(window.PointerEvent){
+    sigCanvas.addEventListener('pointerdown',down,{passive:false});
+    sigCanvas.addEventListener('pointermove',move,{passive:false});
+    window.addEventListener('pointerup',up);
+  } else {
+    sigCanvas.addEventListener('touchstart',down,{passive:false});
+    sigCanvas.addEventListener('touchmove',move,{passive:false});
+    window.addEventListener('touchend',up);
+    sigCanvas.addEventListener('mousedown',down);
+    sigCanvas.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',up);
+  }
+  window.addEventListener('resize',()=>{ if(!hasStroke) fit(); });
+  if(eng) eng.textContent='v3.1 · redo · beröringar: 0';
 }
 function wireSign(){
-  el('btn-sig-clear').addEventListener('click',()=>{ if(signaturePad){signaturePad.clear();} else if(sigCtx){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);} hasStroke=false;refresh();});
+  el('btn-sig-clear').addEventListener('click',()=>{ if(sigCtx){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);} hasStroke=false;refresh();});
   el('sign-typed').addEventListener('input',refresh);
   el('sign-agree').addEventListener('change',refresh);
   el('btn-send-otp').addEventListener('click',doSendOtp);
@@ -407,9 +408,8 @@ async function doSendOtp(){
   el('otp-panel').style.display='block';btn.style.display='none';document.querySelector('#otp-inputs input').focus();
 }
 async function doSign(){
-  let sigData='';
-  if(signaturePad){ if(signaturePad.isEmpty()){toast('Rita din signatur först');return;} sigData=signaturePad.toDataURL('image/png'); }
-  else { if(!hasStroke){toast('Rita din signatur först');return;} sigData=sigCanvas.toDataURL('image/png'); }
+  if(!hasStroke){ toast('Rita din signatur först'); return; }
+  const sigData=sigCanvas.toDataURL('image/png');
   const otp=[...document.querySelectorAll('#otp-inputs input')].map(b=>b.value).join('');
   if(otp.length!==6){toast('Ange 6 siffror');return;}
   const btn=el('btn-confirm-sign');btn.disabled=true;btn.textContent='Signerar…';
