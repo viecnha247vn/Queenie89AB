@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v12</span>
+    <span class="verbadge">v13</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v12</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v13</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -233,7 +233,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v12)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v13)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -276,9 +276,13 @@ function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 function screen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));el('screen-'+n).classList.add('active');window.scrollTo(0,0);}
 function sealGlyph(hash){let r='';const cell=10,size=5,pad=1;for(let y=0;y<size;y++)for(let x=0;x<3;x++){if(parseInt((hash[(y*3+x)*2]||'0'),16)%2===0){[x,size-1-x].forEach(px=>r+=`<rect x="${pad+px*cell}" y="${pad+y*cell}" width="${cell}" height="${cell}" rx="1.5" fill="#1F5E54"/>`);}}const t=size*cell+pad*2;return `<svg viewBox="0 0 ${t} ${t}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;}
 
-async function api(action,payload){
-  const res=await fetch(CONFIG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},payload))});
-  return res.json();
+async function api(action,payload,timeoutMs){
+  const ctrl = ('AbortController' in window) ? new AbortController() : null;
+  const t = ctrl ? setTimeout(()=>ctrl.abort(), timeoutMs||25000) : null;
+  try{
+    const res=await fetch(CONFIG.API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},payload)),signal:ctrl?ctrl.signal:undefined});
+    return await res.json();
+  } finally { if(t) clearTimeout(t); }
 }
 
 /* ---- BOOT ---- */
@@ -286,7 +290,7 @@ async function api(action,payload){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v12)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v13)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -402,14 +406,23 @@ async function doSign(){
   const btn=el('btn-confirm-sign');btn.disabled=true;btn.textContent='Signerar…';
   const payload={token:TOKEN,signature:sigCanvas.toDataURL('image/png'),typedName:name,userAgent:navigator.userAgent};
   if(SIDE==='B'){payload.orgnr=el('s-orgnr').value.trim();payload.address=el('s-address').value.trim();}
-  let r; try{ r=await api('sign',payload); }
+  let r; try{ r=await api('sign',payload,25000); }
   catch(e){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='NÄT-FEL vid signering: '+((e&&e.message)||e);} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
-  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SIGN-FEL: '+((r&&r.error)||'okänt')+(String((r&&r.error)||'').indexOf('kod')>=0?' — Code.gs är inte omdeployad (ny version)':'');} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
-  if(D){ D.style.display='block'; D.style.color='#1F5E54'; D.textContent = r.done ? ('KLART ✓ båda signerat · PDF: '+(r.pdfUrl||'(finns i din Drive-mapp)')) : 'Signerat ✓ — väntar på motpartens signatur'; }
-  el('thanks-text').innerHTML = r.done
-    ? 'Avtalet är signerat av båda parter.'+(r.pdfUrl?'<br><br><a class="btn btn-primary" style="display:inline-flex" href="'+r.pdfUrl+'" target="_blank">Ladda ner signerat avtal (PDF)</a>':'<br><br>PDF:en finns i din Google Drive-mapp.')
-    : 'Tack! Vi väntar nu på motpartens signatur.';
+  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SIGN-FEL: '+((r&&r.error)||'okänt')+(String((r&&r.error)||'').indexOf('kod')>=0?' — Code.gs ej ny version':'');} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
+  if(!r.done){
+    if(D){D.style.display='block';D.style.color='#1F5E54';D.textContent='Signerat ✓ — väntar på motpartens signatur';}
+    el('thanks-text').innerHTML='Tack! Din signatur är registrerad. Vi väntar nu på motpartens signatur.';
+    screen('thanks'); return;
+  }
+  // Båda klara → visa direkt, bygg PDF separat
+  el('thanks-text').innerHTML='Avtalet är signerat av båda parter.<br><br><span id="pdfstatus" style="color:var(--ink-soft)">Förseglad PDF genereras… (ca 20 sek)</span>';
   screen('thanks');
+  if(D){D.style.display='block';D.style.color='#1F5E54';D.textContent='Båda signerat ✓ — genererar PDF…';}
+  let f; try{ f=await api('finalize',{token:TOKEN},60000); }
+  catch(e){ const s=el('pdfstatus'); if(s) s.textContent='PDF:en genereras och finns strax i din Google Drive-mapp.'; if(D)D.textContent='Klart ✓ — PDF genereras i Drive'; return; }
+  const s=el('pdfstatus');
+  if(f&&f.ok&&f.pdfUrl){ if(s) s.innerHTML='<a class="btn btn-primary" style="display:inline-flex" href="'+f.pdfUrl+'" target="_blank">Ladda ner signerat avtal (PDF)</a>'; if(D)D.textContent='KLART ✓ · PDF: '+f.pdfUrl; }
+  else{ if(s) s.textContent='Klart ✓ — PDF:en finns i din Google Drive-mapp.'; if(D)D.textContent='KLART ✓ (ingen delningslänk'+(f&&f.error?': '+f.error:'')+') — finns i Drive-mappen'; }
 }
 </script>
 </body>
