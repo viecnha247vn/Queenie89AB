@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v6</span>
+    <span class="verbadge">v7</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v6</span></span>
+          <span class="step-label">Steg 2 · Din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v7</span></span>
           <div class="field" style="margin-top:10px"><label for="sign-name">Skriv ditt fullständiga namn — det blir din signatur</label><input type="text" id="sign-name" autocomplete="name" placeholder="T.ex. Anna Andersson"/></div>
           <div class="sig-preview" id="sig-preview"></div>
           <label class="check"><input type="checkbox" id="sign-agree"/><span>Jag har läst avtalet och godkänner dess villkor. Min elektroniska signatur är juridiskt bindande enligt eIDAS (910/2014).</span></label>
@@ -238,7 +238,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v6)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v7)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -290,8 +290,8 @@ async function api(action,payload){
 (function(){
   try{
     const token=new URLSearchParams(location.search).get('token');
-    if(token){ initSign(token); } else { initAdmin(); }
-    var d=el('dbg'); if(d) d.textContent='JavaScript OK — '+(token?'signeringsvy':'startvy visas')+' (v6)';
+    if(token){ initSign(token); }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v7)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -331,8 +331,20 @@ async function createContract(){
 let SIDE=null,TOKEN=null;
 async function initSign(token){
   TOKEN=token;
-  let r; try{ r=await api('get',{token}); }catch(e){ el('config-notice').innerHTML='<div class="notice">Kunde inte nå servern.</div>'; return; }
-  if(!r.ok){ screen('sign'); el('sign-form').style.display='none'; el('already').style.display='block'; el('already').innerHTML='<div class="notice">'+esc(r.error||'Ogiltig länk')+'</div>'; return; }
+  const D=el('dbg');
+  if(D){ D.style.color='#455360'; D.textContent='Hämtar avtal från servern…'; }
+  let r;
+  try{
+    r=await Promise.race([
+      api('get',{token}),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIDSGRÄNS 20s')),20000))
+    ]);
+  }catch(e){
+    if(D){ D.style.color='#9E4630'; D.textContent='SERVERFEL: '+((e&&e.message)||e)+'  · trolig orsak: Apps Script-deploy “Vem har åtkomst” måste vara Alla (CORS)'; }
+    return;
+  }
+  if(!r||!r.ok){ if(D){ D.style.color='#9E4630'; D.textContent='SERVER SVARADE MED FEL: '+((r&&r.error)||'okänt'); } return; }
+  if(D){ D.style.color='#1F5E54'; D.textContent='Avtal hämtat ✓ — visar signeringsvyn'; }
   SIDE=r.side;
   el('sign-eyebrow').textContent=`Signering · Part ${r.side} — ${r.me.name}`;
   el('sign-doc-title').textContent=r.title;
