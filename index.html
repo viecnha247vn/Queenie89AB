@@ -105,6 +105,9 @@
 </style>
 </head>
 <body>
+<script>
+window.addEventListener('error',function(e){var d=document.getElementById('dbg');if(d){d.style.display='block';d.textContent='JS-FEL: '+(e.message||e.error||'okänt')+'  ['+((e.filename||'').split('/').pop())+':'+(e.lineno||'?')+']';}});
+</script>
 <header class="app-header">
   <div class="wrap">
     <div class="brand">
@@ -117,11 +120,12 @@
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v5</span>
+    <span class="verbadge">v6</span>
   </div>
 </header>
 
 <main>
+  <div id="dbg" style="margin:14px 0 8px;padding:12px 15px;border:1px solid #DCE1DA;background:#fff;border-radius:10px;font-family:monospace;font-size:12.5px;color:#455360;word-break:break-word">Diagnostik: väntar på JavaScript…</div>
   <div id="config-notice"></div>
 
   <!-- ADMIN: skapa & skicka -->
@@ -192,7 +196,7 @@
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v5</span></span>
+          <span class="step-label">Steg 2 · Din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v6</span></span>
           <div class="field" style="margin-top:10px"><label for="sign-name">Skriv ditt fullständiga namn — det blir din signatur</label><input type="text" id="sign-name" autocomplete="name" placeholder="T.ex. Anna Andersson"/></div>
           <div class="sig-preview" id="sig-preview"></div>
           <label class="check"><input type="checkbox" id="sign-agree"/><span>Jag har läst avtalet och godkänner dess villkor. Min elektroniska signatur är juridiskt bindande enligt eIDAS (910/2014).</span></label>
@@ -234,6 +238,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v6)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -283,13 +288,13 @@ async function api(action,payload){
 
 /* ---- BOOT ---- */
 (function(){
-  const token=new URLSearchParams(location.search).get('token');
-  if(!CONFIG.API){
-    el('config-notice').innerHTML='<div class="notice"><b>Inställning krävs:</b> klistra in din Apps Script-URL i <span class="mono">CONFIG.API</span> högst upp i script-taggen, och lägg samma <span class="mono">APP_URL</span> i Code.gs.</div>';
-    if(!token){ initAdmin(); }
-    return;
+  try{
+    const token=new URLSearchParams(location.search).get('token');
+    if(token){ initSign(token); } else { initAdmin(); }
+    var d=el('dbg'); if(d) d.textContent='JavaScript OK — '+(token?'signeringsvy':'startvy visas')+' (v6)';
+  }catch(err){
+    var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
-  if(token){ initSign(token); } else { initAdmin(); }
 })();
 
 /* ================= ADMIN ================= */
