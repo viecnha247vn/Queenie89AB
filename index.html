@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v9</span>
+    <span class="verbadge">v10</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v9</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v10</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -242,7 +242,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v9)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v10)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -295,7 +295,7 @@ async function api(action,payload){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v9)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v10)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -408,8 +408,11 @@ function wireSign(){
 function refresh(){el('btn-send-otp').disabled=!(hasStroke&&el('sign-name').value.trim().length>1&&el('sign-agree').checked);}
 async function doSendOtp(){
   const btn=el('btn-send-otp');btn.disabled=true;btn.textContent='Skickar…';
-  const r=await api('sendOtp',{token:TOKEN});
-  if(!r.ok){toast('Fel: '+(r.error||''));btn.disabled=false;btn.textContent='Skicka engångskod till min e-post';return;}
+  const D=el('dbg');
+  let r; try{ r=await api('sendOtp',{token:TOKEN}); }
+  catch(e){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SÄND-FEL: '+((e&&e.message)||e);} btn.disabled=false;btn.textContent='Skicka engångskod till min e-post'; return; }
+  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SERVER (kod-mejl): '+((r&&r.error)||'okänt');} btn.disabled=false;btn.textContent='Skicka engångskod till min e-post'; return; }
+  if(D){D.style.display='block';D.style.color='#1F5E54';D.textContent='Kod skickad ✓ '+(r.to?('till '+r.to+' '):'')+'— kolla e-post OCH skräppost';}
   el('otp-panel').style.display='block';btn.style.display='none';document.querySelector('#otp-inputs input').focus();
 }
 async function doSign(){
