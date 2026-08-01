@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v16</span>
+    <span class="verbadge">v17</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v16</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v17</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -233,9 +233,10 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v16)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v17)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
+var SIDE=null,TOKEN=null,sigCanvas=null,sigCtx=null,drawing=false,hasStroke=false,last=null;
 
 const DEFAULT_TITLE = 'Avtal om anvisning och överlåtelse av affärslokal – Vittsjö';
 const DEFAULT_BODY =
@@ -290,7 +291,7 @@ async function api(action,payload,timeoutMs){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v16)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v17)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -327,7 +328,6 @@ async function createContract(){
 }
 
 /* ================= SIGN ================= */
-var SIDE=null,TOKEN=null,sigCanvas=null,sigCtx=null,drawing=false,hasStroke=false,last=null;
 async function initSign(token){
   TOKEN=token;
   const D=el('dbg');
