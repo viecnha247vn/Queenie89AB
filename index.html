@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v14</span>
+    <span class="verbadge">v15</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v14</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v15</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -233,7 +233,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v14)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v15)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 
@@ -290,7 +290,7 @@ async function api(action,payload,timeoutMs){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v14)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v15)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -409,7 +409,7 @@ async function doSign(){
   if(SIDE==='B'){payload.orgnr=el('s-orgnr').value.trim();payload.address=el('s-address').value.trim();}
   let r; try{ r=await api('sign',payload,25000); }
   catch(e){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='NÄT-FEL vid signering: '+((e&&e.message)||e);} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
-  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SIGN-FEL: '+((r&&r.error)||'okänt')+(String((r&&r.error)||'').indexOf('kod')>=0?' — Code.gs ej ny version':'');} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
+  if(!r||!r.ok){ if(D){D.style.display='block';D.style.color='#9E4630';D.textContent='SIGN-FEL: '+((r&&r.error)||'okänt')+' · token='+String(TOKEN||'TOM').slice(0,8);} btn.disabled=false;btn.textContent='Signera avtalet'; return; }
   if(!r.done){
     if(D){D.style.display='block';D.style.color='#1F5E54';D.textContent='Signerat ✓ — väntar på motpartens signatur';}
     el('thanks-text').innerHTML='Tack! Din signatur är registrerad. Vi väntar nu på motpartens signatur.';
