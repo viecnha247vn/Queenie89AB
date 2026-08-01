@@ -120,7 +120,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
       Signera<small>Queenie89</small>
     </div>
     <div class="nav-spacer"></div>
-    <span class="verbadge">v18</span>
+    <span class="verbadge">v19</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
             </div>
             <div class="divider"></div>
           </div>
-          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v18</span></span>
+          <span class="step-label">Steg 2 · Rita din signatur <span id="sig-engine" style="float:right;font-family:var(--sans);color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">v19</span></span>
           <div class="sig-wrap" style="margin-top:10px">
             <canvas id="sig-canvas"></canvas>
             <div class="sig-baseline"><span>Signatur</span></div>
@@ -233,7 +233,7 @@ window.addEventListener('error',function(e){var d=document.getElementById('dbg')
 <div class="toast" id="toast"></div>
 
 <script>
-try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v18)';}catch(e){}
+try{var _d=document.getElementById('dbg'); if(_d) _d.textContent='JavaScript OK — appen laddas (v19)';}catch(e){}
 /* ====== KONFIG: klistra in din Apps Script-webbapp-URL (…/exec) ====== */
 const CONFIG = { API: 'https://script.google.com/macros/s/AKfycbyFzugzZFiS6QriQKapmViygitiZ_barXcuxjVo9k6MekkAYH-UD7TTDOXVrdIRfUCvHQ/exec' };
 var SIDE=null,TOKEN=null,sigCanvas=null,sigCtx=null,drawing=false,hasStroke=false,last=null;
@@ -291,7 +291,7 @@ async function api(action,payload,timeoutMs){
   try{
     const token=new URLSearchParams(location.search).get('token');
     if(token){ initSign(token); }
-    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v18)'; }
+    else { initAdmin(); var d=el('dbg'); if(d) d.textContent='JavaScript OK — startvy visas (v19)'; }
   }catch(err){
     var d=el('dbg'); if(d){ d.style.color='#9E4630'; d.textContent='BOOT-FEL: '+((err&&err.message)||err); }
   }
@@ -331,19 +331,16 @@ async function createContract(){
 async function initSign(token){
   TOKEN=token;
   const D=el('dbg');
-  if(D){ D.style.color='#455360'; D.textContent='Hämtar avtal från servern…'; }
-  let r;
-  try{
-    r=await Promise.race([
-      api('get',{token}),
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('TIDSGRÄNS 20s')),20000))
-    ]);
-  }catch(e){
-    if(D){ D.style.color='#9E4630'; D.textContent='SERVERFEL: '+((e&&e.message)||e)+'  · trolig orsak: Apps Script-deploy “Vem har åtkomst” måste vara Alla (CORS)'; }
-    return;
+  const show=t=>{ if(D){ D.style.display='block'; D.style.color='#455360'; D.textContent=t; } };
+  const showErr=h=>{ if(D){ D.style.display='block'; D.style.color='#9E4630'; D.innerHTML=h; } };
+  let r=null;
+  for(let attempt=1; attempt<=2 && !r; attempt++){
+    show(attempt===1?'Hämtar avtal från servern…':'Servern var långsam — försöker igen…');
+    try{ r=await api('get',{token},30000); }
+    catch(e){ if(attempt>=2){ showErr('Servern svarar inte just nu. <a href="#" onclick="location.reload();return false;" style="color:#9E4630;font-weight:700;text-decoration:underline">Ladda om sidan</a>'); return; } }
   }
-  if(!r||!r.ok){ if(D){ D.style.color='#9E4630'; D.textContent='SERVER SVARADE MED FEL: '+((r&&r.error)||'okänt'); } return; }
-  if(D){ D.style.color='#1F5E54'; D.textContent='Avtal hämtat ✓ — visar signeringsvyn'; }
+  if(!r||!r.ok){ showErr('Ogiltig eller utgången länk: '+((r&&r.error)||'okänt')); return; }
+  if(D){ D.style.color='#1F5E54'; D.textContent='Avtal hämtat ✓'; }
   SIDE=r.side;
   el('sign-eyebrow').textContent=`Signering · Part ${r.side} — ${r.me.name}`;
   el('sign-doc-title').textContent=r.title;
